@@ -1,0 +1,4 @@
+pydantic
+ollama
+pytest
+pypdf>=6.14,<7

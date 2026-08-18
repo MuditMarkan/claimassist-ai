@@ -1,0 +1,31 @@
+data/claimassist.db*
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Pytest
+.pytest_cache/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local/generated data
+data/uploads/
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+
+# Chroma vector database
+chroma/
+chroma_db/
+
+# Environment variables
+.env
+
+# Evaluation output
+evaluation/results/
+
+# Logs
+*.log
