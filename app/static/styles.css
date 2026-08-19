@@ -1,0 +1,28 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #f4f7fb;
+    color: #172033;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    width: min(900px, 92%);
+    margin: 60px auto;
+}
+h1 {
+    margin-bottom: 8px;
+    color: #174ea6;
+}
+
+.card {
+    margin-top: 32px;
+    padding: 24px;
+    background: white;
+    border: 1px solid #dce3ef;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(23, 32, 51, 0.08);
+}

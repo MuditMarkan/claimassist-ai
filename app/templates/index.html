@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+    <title>ClaimAssist</title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='/styles.css') }}"
+    >
+</head>
+<body>
+    <main class="container">
+        <h1>ClaimAssist</h1>
+
+        <p>
+            Submit a synthetic claim for evidence-grounded review.
+        </p>
+
+        {% if error %}
+            <section class="card error">
+                <strong>{{ error }}</strong>
+            </section>
+        {% endif %}
+
+        <section class="card">
+            <form
+                method="post"
+                action="{{ url_for('analyze_claim') }}"
+            >
+                <label for="claim_text">
+                    Claim document
+                </label>
+
+                <textarea
+                    id="claim_text"
+                    name="claim_text"
+                    rows="16"
+                    maxlength="20000"
+                    required
+                    placeholder="Paste a synthetic claim here..."
+                ></textarea>
+
+                <button type="submit">
+                    Analyze claim
+                </button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

@@ -29,3 +29,6 @@ evaluation/results/
 
 # Logs
 *.log
+
+data/chroma/
+data/langgraph_checkpoints.sqlite*

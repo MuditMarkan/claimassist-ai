@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+    <title>ClaimAssist Result</title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='/styles.css') }}"
+    >
+</head>
+<body>
+    <main class="container">
+        <h1>Claim result</h1>
+
+        <section class="card">
+            <p>
+                <strong>Status:</strong>
+                {{ workflow.status }}
+            </p>
+
+            <p>
+                <strong>Thread ID:</strong>
+                {{ workflow.thread_id }}
+            </p>
+
+            {% if workflow.status == "WAITING_FOR_REVIEW" %}
+                <h2>Human review required</h2>
+
+                {% for issue in workflow.review_request.issues %}
+                    <p>{{ issue }}</p>
+                {% endfor %}
+            {% elif workflow.result %}
+                <h2>
+                    Decision:
+                    {{ workflow.result.decision.decision }}
+                </h2>
+
+                <h3>Reasons</h3>
+                <ul>
+                    {% for reason in workflow.result.decision.reasons %}
+                        <li>{{ reason }}</li>
+                    {% endfor %}
+                </ul>
+
+                <h3>Citations</h3>
+                <ul>
+                    {% for citation in workflow.result.citations %}
+                        <li>{{ citation }}</li>
+                    {% else %}
+                        <li>No citations returned.</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
+
+        <p>
+            <a href="{{ url_for('home_page') }}">
+                Analyze another claim
+            </a>
+        </p>
+    </main>
+</body>
+</html>
