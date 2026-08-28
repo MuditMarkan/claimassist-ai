@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ClaimAssist — Policy Library</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body class="page-wrapper">
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="{{ url_for('home_page') }}" class="site-header__logo">
+        <div class="site-header__logo-icon">CA</div>
+        ClaimAssist
+      </a>
+      <nav class="site-header__nav">
+        <a href="{{ url_for('home_page') }}"     class="nav-link">&#128196; Submit Claim</a>
+        <a href="{{ url_for('policies_page') }}" class="nav-link nav-link--active">&#128220; Policies</a>
+        <a href="{{ url_for('claims_list') }}"   class="nav-link">&#128203; Claims</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Processing overlay -->
+  <div class="processing-overlay" id="processingOverlay">
+    <div class="processing-spinner"></div>
+    <p class="processing-label">Processing policy&hellip;</p>
+    <p class="processing-sub">
+      Saving, indexing into vector database, and extracting structured
+      policy facts with AI. This may take 30–90 seconds.
+    </p>
+  </div>
+
+  <!-- Delete confirmation modal -->
+  <div id="deleteModal" style="display:none;position:fixed;inset:0;z-index:200;
+       background:rgba(0,0,0,.45);align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:var(--radius-lg);padding:var(--sp-8);
+                max-width:420px;width:90%;box-shadow:var(--shadow-lg);">
+      <h3 style="margin-bottom:var(--sp-3);font-size:1.1rem;">Delete Policy Version</h3>
+      <p class="text-sm text-muted" style="margin-bottom:var(--sp-6);">
+        This will permanently delete the policy version and its extracted facts.
+        This action cannot be undone. Active policies and those referenced by
+        claims cannot be deleted.
+      </p>
+      <div style="display:flex;gap:var(--sp-3);">
+        <form id="deleteForm" method="post">
+          <button type="submit" class="btn btn--danger">&#128465; Delete</button>
+        </form>
+        <button class="btn btn--ghost" onclick="closeDeleteModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+
+    <div class="page-hero">
+      <span class="page-hero__eyebrow">&#127960; Company Portal</span>
+      <h1 class="page-hero__title">Policy Library</h1>
+      <p class="page-hero__subtitle">
+        Upload a policy PDF or paste the policy text. The AI will extract
+        coverage facts automatically. Verify, then activate to enable claims.
+      </p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert--error" role="alert">
+      <span class="alert__icon">&#9888;</span>
+      <div class="alert__body"><strong>Error</strong> {{ error }}</div>
+    </div>
+    {% endif %}
+    {% if success %}
+    <div class="alert alert--success" role="alert">
+      <span class="alert__icon">&#10003;</span>
+      <div class="alert__body"><strong>Success</strong> {{ success }}</div>
+    </div>
+    {% endif %}
+
+    <div style="display:grid;grid-template-columns:380px 1fr;gap:var(--sp-8);align-items:start;">
+
+      <!-- ── Left panel: upload form with tabs ── -->
+      <div class="card" style="position:sticky;top:80px;">
+        <div class="card__header">
+          <h2 class="card__title"><span class="card__title-icon">&#128228;</span>Add Policy</h2>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs" id="uploadTabs" style="margin-bottom:var(--sp-6);">
+          <button class="tab-btn active" data-tab="tabFile" type="button">
+            &#128196; Upload PDF
+          </button>
+          <button class="tab-btn" data-tab="tabText" type="button">
+            &#128203; Paste Text
+          </button>
+        </div>
+
+        <!-- Shared name / version fields -->
+        <div class="form-grid" id="sharedFields">
+          <div class="form-group">
+            <label class="form-label" for="policy_name_shared">
+              Policy name <span class="required">*</span>
+            </label>
+            <input type="text" id="policy_name_shared" class="form-input"
+                   maxlength="200" required
+                   placeholder="e.g. Standard Auto Insurance Policy">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="version_label_shared">Version</label>
+            <input type="text" id="version_label_shared" class="form-input"
+                   maxlength="50" placeholder="v1" value="v1">
+          </div>
+        </div>
+
+        <!-- ── Tab: File upload ── -->
+        <div class="tab-panel active" id="tabFile">
+          <form id="policyForm" method="post"
+                action="{{ url_for('upload_policy') }}"
+                enctype="multipart/form-data" novalidate>
+
+            <input type="hidden" name="policy_name"   id="file_policy_name">
+            <input type="hidden" name="version_label" id="file_version_label">
+
+            <div class="form-group" style="margin-top:var(--sp-4);">
+              <label class="form-label">Policy file <span class="required">*</span></label>
+              <div class="upload-zone" id="policyZone" role="button" tabindex="0">
+                <input type="file" id="policy_file" name="policy_file"
+                       accept=".pdf,.txt,.md" required aria-label="Select policy file">
+                <span class="upload-zone__icon" id="zoneIcon">&#128220;</span>
+                <span class="upload-zone__label" id="zoneLabel">
+                  Drop file or <strong style="color:var(--clr-primary)">browse</strong>
+                </span>
+                <span class="upload-zone__hint" id="zoneHint">
+                  PDF, TXT, MD &nbsp;&bull;&nbsp; Max 10 MB
+                </span>
+              </div>
+            </div>
+
+            <div class="alert alert--info" style="margin-top:var(--sp-4);margin-bottom:0;">
+              <span class="alert__icon">&#8505;</span>
+              <div class="alert__body text-sm">
+                After upload, AI extracts facts automatically.
+                Verify and activate before submitting claims.
+              </div>
+            </div>
+
+            <button type="submit" id="uploadBtn"
+                    class="btn btn--primary btn--full mt-6">
+              <span class="spinner" aria-hidden="true"></span>
+              <span class="btn-text">&#128228; Upload &amp; Extract</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- ── Tab: Paste text ── -->
+        <div class="tab-panel" id="tabText">
+          <form id="textForm" method="post"
+                action="{{ url_for('upload_policy_text') }}"
+                novalidate>
+
+            <input type="hidden" name="policy_name"   id="text_policy_name">
+            <input type="hidden" name="version_label" id="text_version_label">
+
+            <div class="form-group" style="margin-top:var(--sp-4);">
+              <label class="form-label" for="policy_text_input">
+                Policy text <span class="required">*</span>
+              </label>
+              <textarea id="policy_text_input" name="policy_text"
+                        class="form-textarea" style="min-height:280px;"
+                        minlength="50" maxlength="100000" required
+                        placeholder="Paste your full policy document text here...
+
+Include: policy number, named insured, effective dates, vehicle details,
+coverage types, limits, deductibles, required documents, and exclusions."></textarea>
+              <div class="flex-between" style="margin-top:var(--sp-1);">
+                <span class="form-hint">Minimum 50 characters.</span>
+                <span class="char-counter" id="textCharCount">0 / 100,000</span>
+              </div>
+            </div>
+
+            <div class="alert alert--info" style="margin-top:var(--sp-4);margin-bottom:0;">
+              <span class="alert__icon">&#8505;</span>
+              <div class="alert__body text-sm">
+                The text will be saved as a .txt file, indexed, and processed
+                by AI exactly the same as an uploaded PDF.
+              </div>
+            </div>
+
+            <button type="submit" id="textBtn"
+                    class="btn btn--primary btn--full mt-6">
+              <span class="spinner" aria-hidden="true"></span>
+              <span class="btn-text">&#128221; Save &amp; Extract</span>
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- ── Right panel: policy versions table ── -->
+      <div>
+        <div class="card__header" style="margin-bottom:var(--sp-5);padding-bottom:var(--sp-4);border-bottom:1px solid var(--clr-border);">
+          <h2 class="card__title">
+            <span class="card__title-icon">&#128220;</span>Policy Versions
+          </h2>
+          <span class="text-muted text-sm">
+            {{ versions | length }} version{{ 's' if versions|length != 1 }}
+          </span>
+        </div>
+
+        {% if versions %}
+        <div class="policy-table-wrap">
+          <table class="policy-table" aria-label="Policy versions">
+            <thead>
+              <tr>
+                <th>Policy name</th>
+                <th>Version</th>
+                <th>File</th>
+                <th>Status</th>
+                <th>Index</th>
+                <th>Effective</th>
+                <th colspan="2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for v in versions %}
+              <tr>
+                <td><strong>{{ v.policy_name }}</strong></td>
+                <td><span class="font-mono text-sm text-muted">{{ v.version_label }}</span></td>
+                <td>
+                  <span class="text-sm" title="{{ v.original_filename }}">
+                    {{ v.original_filename[:26] }}{% if v.original_filename|length > 26 %}&hellip;{% endif %}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-pill status-pill--{{ v.status | replace('_','-') }}">
+                    {{ v.status | replace('_', ' ') }}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-pill status-pill--{{ v.index_status }}">
+                    {{ v.index_status | replace('_', ' ') }}
+                  </span>
+                </td>
+                <td class="text-sm text-muted">
+                  {% if v.effective_from %}{{ v.effective_from }}{% else %}&mdash;{% endif %}
+                </td>
+                <td>
+                  <a href="{{ url_for('verify_policy_page', version_id=v.id) }}"
+                     class="btn btn--secondary" style="padding:4px 10px;font-size:.78rem;">
+                    {% if v.status == 'ACTIVE_AND_VERIFIED' %}View{% else %}Verify{% endif %}
+                  </a>
+                </td>
+                <td>
+                  {% if v.status != 'ACTIVE_AND_VERIFIED' %}
+                  <button type="button"
+                          class="btn btn--danger"
+                          style="padding:4px 10px;font-size:.78rem;"
+                          onclick="confirmDelete({{ v.id }}, '{{ v.policy_name | e }} ({{ v.version_label | e }})')">
+                    &#128465; Delete
+                  </button>
+                  {% else %}
+                  <span class="text-sm text-muted" title="Cannot delete active policy">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% else %}
+        <div class="card card--flat">
+          <div class="empty-state" style="padding:var(--sp-12) var(--sp-6);">
+            <span class="empty-state__icon">&#128220;</span>
+            <p style="font-size:1rem;font-weight:600;color:var(--clr-text);margin-bottom:var(--sp-2);">
+              No policies yet
+            </p>
+            <p style="max-width:38ch;margin:0 auto;">
+              Upload a policy PDF or paste policy text using the form on the left.
+              Claim submission is disabled until a policy is verified and activated.
+            </p>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Lifecycle legend -->
+        <div class="card card--inset mt-6">
+          <h3 style="font-size:.85rem;font-weight:700;margin-bottom:var(--sp-3);">
+            &#128161; Policy lifecycle
+          </h3>
+          <div style="display:flex;flex-direction:column;gap:var(--sp-2);">
+            {% for step, desc in [
+              ('UPLOADED',           'File saved. Extraction starting.'),
+              ('NEEDS-VERIFICATION', 'AI extracted facts. Reviewer must confirm.'),
+              ('ACTIVE-AND-VERIFIED','Policy live. Claims can now be submitted.'),
+              ('SUPERSEDED',         'Replaced by a newer version.'),
+            ] %}
+            <div style="display:flex;align-items:center;gap:var(--sp-3);">
+              <span class="status-pill status-pill--{{ step }}" style="flex-shrink:0;white-space:nowrap;">
+                {{ step | replace('-',' ') }}
+              </span>
+              <span class="text-sm text-muted">{{ desc }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    ClaimAssist &mdash; Preliminary AI-assisted assessment only &mdash; Final decisions require authorized human review
+  </footer>
+
+  <script>
+    // ── Tab switching ────────────────────────────────────────────────────
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // ── Sync shared name/version into both forms ─────────────────────────
+    const nameShared    = document.getElementById('policy_name_shared');
+    const versionShared = document.getElementById('version_label_shared');
+
+    function syncFields() {
+      document.getElementById('file_policy_name').value    = nameShared.value;
+      document.getElementById('file_version_label').value  = versionShared.value;
+      document.getElementById('text_policy_name').value    = nameShared.value;
+      document.getElementById('text_version_label').value  = versionShared.value;
+    }
+    nameShared.addEventListener('input',    syncFields);
+    versionShared.addEventListener('input', syncFields);
+
+    // ── File upload zone ─────────────────────────────────────────────────
+    const fileInput = document.getElementById('policy_file');
+    const zoneIcon  = document.getElementById('zoneIcon');
+    const zoneLabel = document.getElementById('zoneLabel');
+    const zoneHint  = document.getElementById('zoneHint');
+    const zone      = document.getElementById('policyZone');
+
+    function fmtBytes(b) {
+      if (b<1024) return b+' B';
+      if (b<1048576) return (b/1024).toFixed(1)+' KB';
+      return (b/1048576).toFixed(1)+' MB';
+    }
+    fileInput.addEventListener('change', () => {
+      const f = fileInput.files[0];
+      if (!f) return;
+      zoneIcon.textContent  = f.name.endsWith('.pdf') ? '📄' : '📝';
+      zoneLabel.innerHTML   = `<strong style="color:var(--clr-primary)">${f.name}</strong>`;
+      zoneHint.textContent  = fmtBytes(f.size) + ' — ready to upload';
+      zone.style.borderColor = 'var(--clr-primary)';
+      zone.style.background  = 'var(--clr-primary-light)';
+    });
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('upload-zone--dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('upload-zone--dragover'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('upload-zone--dragover');
+      if (e.dataTransfer.files.length) {
+        const dt = new DataTransfer(); dt.items.add(e.dataTransfer.files[0]);
+        fileInput.files = dt.files; fileInput.dispatchEvent(new Event('change'));
+      }
+    });
+    zone.addEventListener('keydown', e => {
+      if (e.key==='Enter'||e.key===' ') { e.preventDefault(); fileInput.click(); }
+    });
+
+    // ── Text character counter ────────────────────────────────────────────
+    const policyTextarea = document.getElementById('policy_text_input');
+    const textCounter    = document.getElementById('textCharCount');
+    policyTextarea.addEventListener('input', () => {
+      const n = policyTextarea.value.length;
+      textCounter.textContent = n.toLocaleString() + ' / 100,000';
+      textCounter.className = 'char-counter' + (n >= 100000 ? ' at-limit' : n >= 90000 ? ' near-limit' : '');
+    });
+
+    // ── Form submit → overlay ─────────────────────────────────────────────
+    const overlay = document.getElementById('processingOverlay');
+
+    document.getElementById('policyForm').addEventListener('submit', e => {
+      syncFields();
+      if (!nameShared.value.trim()) { e.preventDefault(); nameShared.focus(); return; }
+      if (!fileInput.files.length)  { e.preventDefault(); zone.style.borderColor='var(--clr-error)'; return; }
+      document.getElementById('uploadBtn').disabled = true;
+      document.getElementById('uploadBtn').classList.add('is-loading');
+      overlay.classList.add('active');
+    });
+
+    document.getElementById('textForm').addEventListener('submit', e => {
+      syncFields();
+      if (!nameShared.value.trim())         { e.preventDefault(); nameShared.focus(); return; }
+      if (!policyTextarea.value.trim())     { e.preventDefault(); policyTextarea.focus(); return; }
+      if (policyTextarea.value.trim().length < 50) { e.preventDefault(); policyTextarea.focus(); return; }
+      document.getElementById('textBtn').disabled = true;
+      document.getElementById('textBtn').classList.add('is-loading');
+      overlay.classList.add('active');
+    });
+
+    // ── Delete modal ──────────────────────────────────────────────────────
+    const deleteModal = document.getElementById('deleteModal');
+    const deleteForm  = document.getElementById('deleteForm');
+
+    function confirmDelete(versionId, label) {
+      deleteForm.action = `/policies/${versionId}/delete`;
+      deleteModal.style.display = 'flex';
+    }
+    function closeDeleteModal() {
+      deleteModal.style.display = 'none';
+    }
+    deleteModal.addEventListener('click', e => {
+      if (e.target === deleteModal) closeDeleteModal();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeDeleteModal();
+    });
+
+    // Auto-dismiss alerts
+    document.querySelectorAll('.alert--success,.alert--error').forEach(el => {
+      setTimeout(() => {
+        el.style.transition = 'opacity .5s'; el.style.opacity = '0';
+        setTimeout(() => el.remove(), 500);
+      }, 9000);
+    });
+  </script>
+
+  <style>
+    @media (max-width:860px) {
+      .container > div[style*="grid-template-columns"] { grid-template-columns:1fr !important; }
+      .card[style*="sticky"] { position:static !important; }
+    }
+    .status-pill--NEEDS-VERIFICATION    { background:var(--clr-warning-bg);  color:var(--clr-warning); }
+    .status-pill--ACTIVE-AND-VERIFIED   { background:var(--clr-approve-bg);  color:var(--clr-approve); }
+    .status-pill--UPLOADED              { background:var(--clr-primary-light); color:var(--clr-primary); }
+    .status-pill--EXTRACTION-IN-PROGRESS{ background:var(--clr-primary-light); color:var(--clr-primary); }
+    .status-pill--SUPERSEDED            { background:#f0f0f0; color:#666; }
+    .status-pill--RETIRED               { background:#f0f0f0; color:#666; }
+    .status-pill--FAILED-SAFE           { background:var(--clr-error-bg); color:var(--clr-error); }
+  </style>
+</body>
+</html>

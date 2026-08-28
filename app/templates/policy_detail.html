@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ClaimAssist — Verify Policy</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body class="page-wrapper">
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="{{ url_for('home_page') }}" class="site-header__logo">
+        <div class="site-header__logo-icon">CA</div>
+        ClaimAssist
+      </a>
+      <nav class="site-header__nav">
+        <a href="{{ url_for('home_page') }}"     class="nav-link">&#128196; Submit Claim</a>
+        <a href="{{ url_for('policies_page') }}" class="nav-link nav-link--active">&#128220; Policies</a>
+        <a href="{{ url_for('claims_list') }}"   class="nav-link">&#128203; Claims</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="page-hero">
+      <span class="page-hero__eyebrow">&#128220; Policy Verification</span>
+      <h1 class="page-hero__title">{{ version.policy_name }}</h1>
+      <p class="page-hero__subtitle">
+        Review the AI-extracted policy facts below. Confirm they are correct,
+        then activate the policy to enable claim submissions.
+      </p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert--error"><span class="alert__icon">&#9888;</span>
+      <div class="alert__body"><strong>Error</strong> {{ error }}</div></div>
+    {% endif %}
+    {% if success %}
+    <div class="alert alert--success"><span class="alert__icon">&#10003;</span>
+      <div class="alert__body"><strong>Success</strong> {{ success }}</div></div>
+    {% endif %}
+
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:var(--sp-8);align-items:start;">
+
+      <!-- Extracted facts -->
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">
+            <span class="card__title-icon">&#129302;</span>
+            AI-Extracted Policy Facts
+          </h2>
+          <span class="status-pill status-pill--{{ version.status | replace('_','-') }}">
+            {{ version.status | replace('_',' ') }}
+          </span>
+        </div>
+
+        {% if extraction %}
+
+        <!-- Identity -->
+        <div class="detail-section">
+          <h3 class="detail-section__heading">&#127968; Policy Identity</h3>
+          <div class="meta-grid">
+            <div class="meta-item">
+              <span class="meta-item__label">Policy Number</span>
+              <span class="meta-item__value">{{ extraction.policy_number or '—' }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">Named Insured</span>
+              <span class="meta-item__value">{{ extraction.named_insured or '—' }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">Effective From</span>
+              <span class="meta-item__value">{{ extraction.effective_from or '—' }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">Effective To</span>
+              <span class="meta-item__value">{{ extraction.effective_to or '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vehicle -->
+        <div class="detail-section">
+          <h3 class="detail-section__heading">&#128663; Vehicle</h3>
+          <div class="meta-grid">
+            <div class="meta-item">
+              <span class="meta-item__label">Year</span>
+              <span class="meta-item__value">{{ extraction.vehicle_year or '—' }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">Make / Model</span>
+              <span class="meta-item__value">{{ extraction.vehicle_make_model or '—' }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">VIN</span>
+              <span class="meta-item__value font-mono">{{ extraction.vehicle_vin or '—' }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">Plate</span>
+              <span class="meta-item__value font-mono">{{ extraction.vehicle_plate or '—' }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">Territory</span>
+              <span class="meta-item__value">{{ extraction.territory or '—' }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">Permitted Use</span>
+              <span class="meta-item__value">{{ extraction.permitted_use or '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coverage & Financials -->
+        <div class="detail-section">
+          <h3 class="detail-section__heading">&#128181; Coverage &amp; Financials</h3>
+          <div class="meta-grid">
+            <div class="meta-item">
+              <span class="meta-item__label">Coverage Types</span>
+              <span class="meta-item__value">
+                {% if extraction.coverage_types %}
+                  {{ extraction.coverage_types | join(', ') }}
+                {% else %}—{% endif %}
+              </span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">Coverage Limit</span>
+              <span class="meta-item__value">
+                {% if extraction.coverage_limit is not none %}
+                  CAD ${{ '{:,.2f}'.format(extraction.coverage_limit) }}
+                {% else %}—{% endif %}
+              </span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">Deductible</span>
+              <span class="meta-item__value">
+                {% if extraction.deductible is not none %}
+                  CAD ${{ '{:,.2f}'.format(extraction.deductible) }}
+                {% else %}—{% endif %}
+              </span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">Valuation Basis</span>
+              <span class="meta-item__value">{{ extraction.valuation_basis or '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Required documents -->
+        <div class="detail-section">
+          <h3 class="detail-section__heading">&#128203; Required Claim Documents</h3>
+          {% if extraction.required_documents %}
+          <ul class="docs-list">
+            {% for doc in extraction.required_documents %}
+            <li><span>&#10003;</span><span>{{ doc }}</span></li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <p class="text-muted text-sm">No required documents extracted.</p>
+          {% endif %}
+        </div>
+
+        <!-- Exclusions -->
+        <div class="detail-section">
+          <h3 class="detail-section__heading">&#128683; Exclusions</h3>
+          {% if extraction.exclusions %}
+          <ul class="reasons-list">
+            {% for excl in extraction.exclusions %}
+            <li><span>&#8226;</span><span>{{ excl }}</span></li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <p class="text-muted text-sm">No exclusions extracted.</p>
+          {% endif %}
+        </div>
+
+        {% else %}
+        <div class="alert alert--warning">
+          <span class="alert__icon">&#9888;</span>
+          <div class="alert__body">
+            <strong>Extraction not available</strong>
+            Policy facts have not been extracted yet, or extraction failed.
+            Click below to retry — make sure Ollama is running first.
+          </div>
+        </div>
+        <form method="post"
+              action="{{ url_for('reextract_policy', version_id=version.id) }}"
+              style="margin-top:var(--sp-4);">
+          <button type="submit" class="btn btn--primary">
+            &#128260; Retry Extraction
+          </button>
+        </form>
+        {% endif %}
+      </div>
+
+      <!-- Activation panel -->
+      <div>
+        <div class="card">
+          <div class="card__header">
+            <h2 class="card__title"><span class="card__title-icon">&#9989;</span>Activate Policy</h2>
+          </div>
+
+          {% if version.status == 'ACTIVE_AND_VERIFIED' %}
+          <div class="alert alert--success" style="margin-bottom:0;">
+            <span class="alert__icon">&#10003;</span>
+            <div class="alert__body">
+              <strong>Already active</strong>
+              This policy version is currently live and accepting claims.
+            </div>
+          </div>
+
+          {% elif extraction %}
+          <p class="text-sm text-muted" style="margin-bottom:var(--sp-4);">
+            Review the extracted facts on the left. If they are correct,
+            activate this policy version. Any currently active version will
+            be automatically superseded.
+          </p>
+
+          <form method="post"
+                action="{{ url_for('activate_policy', version_id=version.id) }}">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="eff_from">Effective from (optional)</label>
+                <input type="date" id="eff_from" name="effective_from"
+                       class="form-input"
+                       value="{{ extraction.effective_from or '' }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="eff_to">Effective to (optional)</label>
+                <input type="date" id="eff_to" name="effective_to"
+                       class="form-input"
+                       value="{{ extraction.effective_to or '' }}">
+              </div>
+            </div>
+            <div class="alert alert--warning" style="margin-top:var(--sp-4);">
+              <span class="alert__icon">&#9888;</span>
+              <div class="alert__body text-sm">
+                Only activate if the extracted facts above are correct.
+                Incorrect facts may affect claim decisions.
+              </div>
+            </div>
+            <button type="submit" class="btn btn--primary btn--full mt-4">
+              &#9989; Verify &amp; Activate Policy
+            </button>
+          </form>
+
+          {% else %}
+          <p class="text-muted text-sm" style="margin-bottom:var(--sp-4);">
+            Policy extraction must complete before activation.
+          </p>
+          <form method="post"
+                action="{{ url_for('reextract_policy', version_id=version.id) }}">
+            <button type="submit" class="btn btn--primary btn--full">
+              &#128260; Retry Extraction
+            </button>
+          </form>
+          {% endif %}
+
+          <hr class="divider">
+
+          <!-- Meta -->
+          <div class="meta-grid">
+            <div class="meta-item">
+              <span class="meta-item__label">Version</span>
+              <span class="meta-item__value">{{ version.version_label }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">File</span>
+              <span class="meta-item__value text-sm font-mono">{{ version.original_filename }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">Index status</span>
+              <span class="meta-item__value">
+                <span class="status-pill status-pill--{{ version.index_status }}">
+                  {{ version.index_status | replace('_',' ') }}
+                </span>
+              </span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-item__label">Uploaded</span>
+              <span class="meta-item__value text-sm">{{ version.created_at[:10] }}</span>
+            </div>
+          </div>
+        </div>
+
+        <a href="{{ url_for('policies_page') }}"
+           class="btn btn--ghost btn--full mt-4">
+          &#8592; Back to Policy Library
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    ClaimAssist &mdash; Preliminary AI-assisted assessment only &mdash; Final decisions require authorized human review
+  </footer>
+
+  <style>
+    .status-pill--NEEDS-VERIFICATION  { background:var(--clr-warning-bg); color:var(--clr-warning); }
+    .status-pill--ACTIVE-AND-VERIFIED { background:var(--clr-approve-bg); color:var(--clr-approve); }
+    .status-pill--UPLOADED            { background:var(--clr-primary-light); color:var(--clr-primary); }
+    .status-pill--SUPERSEDED          { background:#f0f0f0; color:#666; }
+    .status-pill--FAILED-SAFE         { background:var(--clr-error-bg); color:var(--clr-error); }
+    @media(max-width:860px){
+      .container > div[style*="grid-template-columns"]{grid-template-columns:1fr !important;}
+    }
+  </style>
+</body>
+</html>

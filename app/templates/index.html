@@ -1,54 +1,295 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1"
-    >
-    <title>ClaimAssist</title>
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', path='/styles.css') }}"
-    >
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ClaimAssist — Submit a Claim</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
 </head>
-<body>
-    <main class="container">
-        <h1>ClaimAssist</h1>
+<body class="page-wrapper">
 
-        <p>
-            Submit a synthetic claim for evidence-grounded review.
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="{{ url_for('home_page') }}" class="site-header__logo">
+        <div class="site-header__logo-icon">CA</div>
+        ClaimAssist
+      </a>
+      <nav class="site-header__nav">
+        <a href="{{ url_for('home_page') }}"     class="nav-link nav-link--active">&#128196; Submit Claim</a>
+        <a href="{{ url_for('policies_page') }}" class="nav-link">&#128220; Policies</a>
+        <a href="{{ url_for('claims_list') }}"   class="nav-link">&#128203; Claims</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Processing overlay -->
+  <div class="processing-overlay" id="processingOverlay">
+    <div class="processing-spinner"></div>
+    <p class="processing-label">Analyzing your claim&hellip;</p>
+    <p class="processing-sub">Extracting facts and comparing against policy. This may take 20–40 seconds.</p>
+  </div>
+
+  <main class="container--narrow">
+
+    <!-- Hero -->
+    <div class="page-hero">
+      <span class="page-hero__eyebrow">&#127960; Insurance Claims</span>
+      <h1 class="page-hero__title">Submit a Claim for Review</h1>
+      <p class="page-hero__subtitle">
+        Paste or describe your claim below. The AI will extract key facts,
+        compare them against your active policy, and produce an evidence-based
+        preliminary assessment.
+      </p>
+    </div>
+
+    <!-- Policy gate banner -->
+    {% if not active_policy %}
+    <div class="alert alert--warning" role="alert">
+      <span class="alert__icon">&#9888;</span>
+      <div class="alert__body">
+        <strong>No active policy</strong>
+        You must upload and verify a policy before submitting a claim.
+        <a href="{{ url_for('policies_page') }}" class="btn btn--secondary" style="margin-top:var(--sp-3); display:inline-flex;">
+          &#128228; Upload a Policy
+        </a>
+      </div>
+    </div>
+    {% else %}
+    <div class="alert alert--success" role="alert">
+      <span class="alert__icon">&#10003;</span>
+      <div class="alert__body">
+        <strong>Active policy:</strong>
+        {{ active_policy.policy_name }} ({{ active_policy.version_label }})
+        {% if active_policy.effective_from %}
+          &nbsp;&bull;&nbsp; {{ active_policy.effective_from }} to {{ active_policy.effective_to or 'open' }}
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Error / success -->
+    {% if error %}
+    <div class="alert alert--error" role="alert">
+      <span class="alert__icon">&#9888;</span>
+      <div class="alert__body"><strong>Error</strong> {{ error }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Claim form -->
+    <div class="card">
+      <div class="card__header">
+        <h2 class="card__title"><span class="card__title-icon">&#128196;</span>Claim Details</h2>
+      </div>
+
+      <form id="claimForm" method="post"
+            action="{{ url_for('analyze_claim') }}"
+            enctype="multipart/form-data" novalidate>
+
+        <div class="form-grid">
+
+          <!-- Claim text -->
+          <div class="form-group">
+            <label class="form-label" for="claim_text">
+              Claim document <span class="required">*</span>
+            </label>
+            <textarea id="claim_text" name="claim_text"
+                      class="form-textarea" maxlength="20000" required
+                      placeholder="Describe the loss or paste your claim document text here...
+&#10;Include: incident date, description, vehicle details, submitted documents."
+                      aria-describedby="charCount">{{ claim_text if claim_text else '' }}</textarea>
+            <div class="flex-between">
+              <span class="form-hint">Describe the incident and list all documents you are submitting.</span>
+              <span class="char-counter" id="charCount">0 / 20,000</span>
+            </div>
+          </div>
+
+          <!-- Loss date + quick fields -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="loss_date">
+                Date of loss <span class="required">*</span>
+              </label>
+              <input type="date" id="loss_date" name="loss_date"
+                     class="form-input" required
+                     aria-describedby="lossDateHint">
+              <span class="form-hint" id="lossDateHint">Used to match the correct policy version.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="claimant_name">Claimant name</label>
+              <input type="text" id="claimant_name" name="claimant_name"
+                     class="form-input" maxlength="200"
+                     placeholder="Full name of the insured">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="driver_name">Driver at time of loss</label>
+              <input type="text" id="driver_name" name="driver_name"
+                     class="form-input" maxlength="200"
+                     placeholder="If different from claimant">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="vehicle_vin">Vehicle VIN</label>
+              <input type="text" id="vehicle_vin" name="vehicle_vin"
+                     class="form-input" maxlength="50"
+                     placeholder="17-character VIN">
+            </div>
+          </div>
+
+          <!-- Supporting documents upload -->
+          <div class="form-group">
+            <label class="form-label">
+              Supporting documents &amp; photos <span class="text-muted" style="font-weight:400">— optional</span>
+            </label>
+            <div class="upload-zone" id="evidenceZone" role="button" tabindex="0"
+                 aria-label="Upload supporting documents">
+              <input type="file" id="evidenceFiles" name="evidence_files"
+                     multiple accept=".pdf,.txt,.jpg,.jpeg,.png,.webp"
+                     aria-label="Select supporting files">
+              <span class="upload-zone__icon">&#128206;</span>
+              <span class="upload-zone__label">
+                Drop files here or <strong style="color:var(--clr-primary)">click to browse</strong>
+              </span>
+              <span class="upload-zone__hint">
+                PDF, TXT, JPG, PNG, WEBP &nbsp;&bull;&nbsp; Max 10 MB each
+              </span>
+            </div>
+            <div class="file-list" id="fileList" aria-live="polite"></div>
+          </div>
+
+        </div><!-- /form-grid -->
+
+        <hr class="divider">
+
+        <button type="submit" id="submitBtn"
+                class="btn btn--primary btn--full btn--lg"
+                {% if not active_policy %}disabled aria-disabled="true"{% endif %}>
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="btn-text">&#128269; Analyze Claim</span>
+        </button>
+
+        {% if not active_policy %}
+        <p class="text-muted text-sm" style="text-align:center; margin-top:var(--sp-3);">
+          Upload and verify a policy to enable claim submission.
         </p>
-
-        {% if error %}
-            <section class="card error">
-                <strong>{{ error }}</strong>
-            </section>
         {% endif %}
 
-        <section class="card">
-            <form
-                method="post"
-                action="{{ url_for('analyze_claim') }}"
-            >
-                <label for="claim_text">
-                    Claim document
-                </label>
+      </form>
+    </div>
 
-                <textarea
-                    id="claim_text"
-                    name="claim_text"
-                    rows="16"
-                    maxlength="20000"
-                    required
-                    placeholder="Paste a synthetic claim here..."
-                ></textarea>
+    <!-- How it works -->
+    <div class="card card--flat mt-8"
+         style="background:var(--clr-primary-light); border-color:var(--clr-primary);">
+      <h3 style="font-size:.9rem;font-weight:700;color:var(--clr-primary-dark);margin-bottom:var(--sp-4);">
+        &#9889; How it works
+      </h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--sp-4);">
+        <div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--clr-primary);margin-bottom:4px;">1. Policy extraction</div>
+          <p class="text-sm text-muted">AI reads your verified policy PDF and extracts coverage limits, deductibles, required documents, and exclusions.</p>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--clr-primary);margin-bottom:4px;">2. Claim extraction</div>
+          <p class="text-sm text-muted">AI reads your claim document and extracts claim amount, loss description, VIN, and submitted documents.</p>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--clr-primary);margin-bottom:4px;">3. Comparison</div>
+          <p class="text-sm text-muted">Deterministic Python rules compare every extracted fact against the active policy — no AI guesswork.</p>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--clr-primary);margin-bottom:4px;">4. Outcome</div>
+          <p class="text-sm text-muted">LIKELY COVERED, LIKELY NOT COVERED, or REVIEW REQUIRED — with full citations and calculation.</p>
+        </div>
+      </div>
+    </div>
 
-                <button type="submit">
-                    Analyze claim
-                </button>
-            </form>
-        </section>
-    </main>
+  </main>
+
+  <footer class="site-footer">
+    ClaimAssist &mdash; Preliminary AI-assisted assessment only &mdash; Final decisions require authorized human review
+  </footer>
+
+  <script>
+    // Character counter
+    const textarea = document.getElementById('claim_text');
+    const counter  = document.getElementById('charCount');
+    function updateCounter() {
+      const n = textarea.value.length;
+      counter.textContent = n.toLocaleString() + ' / 20,000';
+      counter.className = 'char-counter' +
+        (n >= 20000 ? ' at-limit' : n >= 18000 ? ' near-limit' : '');
+    }
+    textarea.addEventListener('input', updateCounter);
+    updateCounter();
+
+    // File upload preview
+    const fileInput = document.getElementById('evidenceFiles');
+    const fileList  = document.getElementById('fileList');
+    const zone      = document.getElementById('evidenceZone');
+    let selectedFiles = [];
+
+    function formatBytes(b) {
+      if (b < 1024) return b + ' B';
+      if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+      return (b/1048576).toFixed(1) + ' MB';
+    }
+    function iconFor(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      return {pdf:'📄',txt:'📝',jpg:'🖼️',jpeg:'🖼️',png:'🖼️',webp:'🖼️'}[ext] || '📎';
+    }
+    function renderFiles() {
+      fileList.innerHTML = '';
+      selectedFiles.forEach((f, i) => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.innerHTML = `<span class="file-item__icon">${iconFor(f.name)}</span>
+          <span class="file-item__name" title="${f.name}">${f.name}</span>
+          <span class="file-item__size">${formatBytes(f.size)}</span>
+          <button type="button" class="file-item__remove" data-index="${i}"
+                  aria-label="Remove ${f.name}">&#215;</button>`;
+        fileList.appendChild(item);
+      });
+      const dt = new DataTransfer();
+      selectedFiles.forEach(f => dt.items.add(f));
+      fileInput.files = dt.files;
+    }
+    fileInput.addEventListener('change', () => {
+      Array.from(fileInput.files).forEach(f => {
+        if (!selectedFiles.find(s => s.name===f.name && s.size===f.size))
+          selectedFiles.push(f);
+      });
+      renderFiles();
+    });
+    fileList.addEventListener('click', e => {
+      const btn = e.target.closest('[data-index]');
+      if (btn) { selectedFiles.splice(+btn.dataset.index,1); renderFiles(); }
+    });
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('upload-zone--dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('upload-zone--dragover'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('upload-zone--dragover');
+      Array.from(e.dataTransfer.files).forEach(f => {
+        if (!selectedFiles.find(s => s.name===f.name && s.size===f.size))
+          selectedFiles.push(f);
+      });
+      renderFiles();
+    });
+    zone.addEventListener('keydown', e => {
+      if (e.key==='Enter'||e.key===' ') { e.preventDefault(); fileInput.click(); }
+    });
+
+    // Form submit
+    const form      = document.getElementById('claimForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const overlay   = document.getElementById('processingOverlay');
+    form.addEventListener('submit', e => {
+      if (submitBtn.disabled) { e.preventDefault(); return; }
+      if (!textarea.value.trim()) { e.preventDefault(); textarea.focus(); return; }
+      submitBtn.disabled = true;
+      submitBtn.classList.add('is-loading');
+      overlay.classList.add('active');
+    });
+  </script>
 </body>
 </html>

@@ -1,1 +1,168 @@
-hoi
+NORTHSTAR INSURANCE COMPANY
+PRIVATE PASSENGER AUTOMOBILE INSURANCE POLICY
+
+Policy Number: NSI-AUTO-2024-00142
+Named Insured: Jordan Mitchell
+Address: 412 Maplewood Drive, Oakville, ON L6J 2R4
+Policy Period: Effective January 1, 2024 to January 1, 2025
+(12:01 a.m. Standard Time at the address of the Named Insured)
+
+Insured Vehicle
+Year: 2021
+Make and Model: Honda Accord Sport
+VIN: 1HGCV1F34MA012345
+Licence Plate: BCDF 441
+Territory: Ontario, Canada
+Permitted Use: Pleasure and commuting to work (not for hire)
+
+========================================================
+SCHEDULE OF COVERAGES AND LIMITS
+========================================================
+
+1. COLLISION OR UPSET
+   Coverage: INCLUDED
+   Limit: CAD $50,000 (Actual Cash Value, whichever is less)
+   Deductible: CAD $1,000 per occurrence
+   Description: Pays for direct and accidental loss or damage to the
+   insured vehicle caused by collision with another object or by upset.
+
+2. COMPREHENSIVE (OTHER THAN COLLISION)
+   Coverage: INCLUDED
+   Limit: CAD $50,000 (Actual Cash Value, whichever is less)
+   Deductible: CAD $500 per occurrence
+   Description: Pays for direct and accidental loss or damage to the
+   insured vehicle caused by perils other than collision, including
+   fire, theft, vandalism, weather events, and falling objects.
+
+3. THIRD PARTY LIABILITY
+   Coverage: INCLUDED
+   Limit: CAD $1,000,000 per occurrence
+   Deductible: None
+
+4. ACCIDENT BENEFITS
+   Coverage: INCLUDED — Statutory Accident Benefits Schedule (Ontario)
+   Medical and Rehabilitation: CAD $65,000
+   Income Replacement: 70% of gross weekly income, maximum CAD $400/week
+
+5. UNINSURED MOTORIST
+   Coverage: INCLUDED
+   Limit: CAD $200,000
+
+6. DIRECT COMPENSATION — PROPERTY DAMAGE (DCPD)
+   Coverage: INCLUDED
+   Deductible: None (subject to fault determination rules)
+
+========================================================
+VALUATION BASIS
+========================================================
+
+All physical damage claims (Collision and Comprehensive) are settled
+on the basis of Actual Cash Value (ACV) at the time of loss, which
+is the cost to replace the vehicle with one of similar make, model,
+age, and condition, less applicable depreciation.
+
+Total loss is declared when repair cost exceeds 80% of ACV.
+
+========================================================
+REQUIRED CLAIM DOCUMENTS
+========================================================
+
+To process any Collision or Upset claim the following documents
+must be submitted within 30 days of the date of loss:
+
+1. Completed Claim Form (NSI Form CA-001)
+2. Police Report or Collision Reporting Centre Report
+   (required for all collisions involving third parties or injuries)
+3. Repair Estimate from a licensed repair facility
+4. Proof of Ownership (vehicle registration or title)
+5. Driver Licence (copy of licence of driver at time of loss)
+6. Photographs of vehicle damage (minimum 4 photographs)
+
+For theft claims, a police report is mandatory.
+For glass-only claims, a repair estimate alone is sufficient.
+
+========================================================
+EXCLUSIONS AND RESTRICTIONS
+========================================================
+
+This policy does NOT cover loss or damage:
+
+1. Arising while the insured vehicle is used for commercial delivery,
+   transportation network company (TNC/rideshare) services, or
+   for-hire transportation unless an endorsement is added.
+
+2. Caused intentionally by the insured or any person operating
+   the vehicle with the insured's consent.
+
+3. Arising from racing, speed contests, or stunting on any road
+   or track.
+
+4. Occurring outside the territory of Canada and the continental
+   United States (subject to the Out-of-Province extension clause).
+
+5. To mechanical parts caused by mechanical breakdown, wear and
+   tear, freezing, or gradual deterioration.
+
+6. To personal belongings inside the vehicle (covered under
+   homeowners or tenants policy).
+
+7. While the driver's licence is suspended, expired, or the
+   driver is excluded from coverage by endorsement.
+
+8. Caused by war, invasion, rebellion, or nuclear incident.
+
+========================================================
+DUTIES AFTER A LOSS
+========================================================
+
+In the event of a loss, the insured must:
+
+a) Promptly notify Northstar Insurance Company or its authorized agent.
+b) Protect the vehicle from further damage.
+c) File a police report within 24 hours where required.
+d) Submit all required claim documents within 30 days of the loss date.
+e) Cooperate fully with the company's investigation and inspection.
+f) Submit to an Examination Under Oath if requested.
+
+Failure to comply with these duties may result in denial of the claim.
+
+========================================================
+DEDUCTIBLE SCHEDULE SUMMARY
+========================================================
+
+Collision or Upset:             CAD $1,000
+Comprehensive (all perils):     CAD $500
+Glass Only:                     CAD $0 (nil deductible applies)
+Third Party Liability:          None
+Accident Benefits:              None
+
+========================================================
+ADDITIONAL CONDITIONS
+========================================================
+
+Lienholder: First National Bank of Canada
+            123 Finance Boulevard, Toronto, ON M5G 1Z8
+            Loss payable jointly to insured and lienholder.
+
+Rental Reimbursement (Endorsement OPCF 20):
+   Up to CAD $50/day, maximum CAD $1,500 per claim,
+   while insured vehicle is being repaired.
+
+Loss of Use: Covered under OPCF 20 endorsement above.
+
+Towing and Road Service (Endorsement OPCF 5):
+   Up to CAD $200 per occurrence for towing and emergency road service.
+
+========================================================
+END OF POLICY SCHEDULE
+========================================================
+
+This policy is issued subject to the Ontario Automobile Policy (OAP 1)
+and all endorsements attached hereto. In the event of a conflict between
+this schedule and the OAP 1 wording, the OAP 1 prevails.
+
+Northstar Insurance Company is licensed in the Province of Ontario.
+
+Policy effective: January 1, 2024
+Policy expiry:    January 1, 2025
+Issued:           December 15, 2023

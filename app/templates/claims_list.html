@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ClaimAssist — Claims</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body class="page-wrapper">
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="{{ url_for('home_page') }}" class="site-header__logo">
+        <div class="site-header__logo-icon">CA</div>
+        ClaimAssist
+      </a>
+      <nav class="site-header__nav">
+        <a href="{{ url_for('home_page') }}"     class="nav-link">&#128196; Submit Claim</a>
+        <a href="{{ url_for('policies_page') }}" class="nav-link">&#128220; Policies</a>
+        <a href="{{ url_for('claims_list') }}"   class="nav-link nav-link--active">&#128203; Claims</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="page-hero">
+      <span class="page-hero__eyebrow">&#128203; Claim History</span>
+      <h1 class="page-hero__title">All Claims</h1>
+    </div>
+
+    {% if claims %}
+    <div class="policy-table-wrap">
+      <table class="policy-table" aria-label="Claims">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Reference</th>
+            <th>Loss date</th>
+            <th>Policy</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th>Detail</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in claims %}
+          <tr>
+            <td class="font-mono text-sm text-muted">{{ c.id }}</td>
+            <td>{{ c.claim_reference or '—' }}</td>
+            <td class="text-sm">{{ c.loss_date or '—' }}</td>
+            <td class="text-sm">{{ c.policy_name or '—' }}</td>
+            <td>
+              <span class="status-pill
+                {% if c.processing_status == 'LIKELY_COVERED' %}status-pill--INDEXED
+                {% elif c.processing_status == 'LIKELY_NOT_COVERED' %}status-pill--FAILED
+                {% elif c.processing_status == 'REVIEW_REQUIRED' %}status-pill--NOT_INDEXED
+                {% else %}status-pill--INDEXING{% endif %}">
+                {{ c.processing_status | replace('_',' ') }}
+              </span>
+            </td>
+            <td class="text-sm text-muted">{{ c.created_at[:10] }}</td>
+            <td>
+              <a href="{{ url_for('claim_detail', claim_id=c.id) }}"
+                 class="btn btn--ghost" style="padding:4px 12px;font-size:.8rem;">
+                View
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card">
+      <div class="empty-state">
+        <span class="empty-state__icon">&#128203;</span>
+        <p style="font-size:1rem;font-weight:600;margin-bottom:var(--sp-2);">No claims yet</p>
+        <a href="{{ url_for('home_page') }}" class="btn btn--primary">Submit a Claim</a>
+      </div>
+    </div>
+    {% endif %}
+
+  </main>
+
+  <footer class="site-footer">
+    ClaimAssist &mdash; Preliminary AI-assisted assessment only &mdash; Final decisions require authorized human review
+  </footer>
+</body>
+</html>
